@@ -2,7 +2,14 @@
 
 #include <mbgl/map/mode.hpp>
 #include <mbgl/map/transform_state.hpp>
+#include <mbgl/style/image_impl.hpp>
+#include <mbgl/style/layer_impl.hpp>
+#include <mbgl/style/light_impl.hpp>
+#include <mbgl/style/source_impl.hpp>
 #include <mbgl/util/chrono.hpp>
+#include <mbgl/util/immutable.hpp>
+
+#include <vector>
 
 namespace mbgl {
 
