@@ -312,6 +312,8 @@ set(MBGL_CORE_FILES
     include/mbgl/storage/resource.hpp
     include/mbgl/storage/response.hpp
     src/mbgl/storage/asset_file_source.hpp
+    src/mbgl/storage/file_source_request.cpp
+    src/mbgl/storage/file_source_request.hpp
     src/mbgl/storage/http_file_source.hpp
     src/mbgl/storage/local_file_source.hpp
     src/mbgl/storage/network_status.cpp

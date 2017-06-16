@@ -1,4 +1,5 @@
 #include <mbgl/storage/local_file_source.hpp>
+#include <mbgl/storage/file_source_request.hpp>
 #include <mbgl/storage/response.hpp>
 #include <mbgl/util/string.hpp>
 #include <mbgl/util/threaded_object.hpp>
@@ -59,26 +60,17 @@ LocalFileSource::LocalFileSource()
 LocalFileSource::~LocalFileSource() = default;
 
 std::unique_ptr<AsyncRequest> LocalFileSource::request(const Resource& resource, Callback callback) {
-    class LocalFileRequest : public AsyncRequest {
-    public:
-        LocalFileRequest(Resource resource_, FileSource::Callback callback_, ActorRef<LocalFileSource::Impl> fs_)
-            : mailbox(std::make_shared<Mailbox>(*util::RunLoop::Get()))
-            , fs(fs_) {
-            fs.invoke(&LocalFileSource::Impl::request, resource_.url, [callback_, ref = ActorRef<LocalFileRequest>(*this, mailbox)](Response res) mutable {
-                ref.invoke(&LocalFileRequest::runCallback, callback_, res);
-            });
-        }
+    auto mailbox = std::make_shared<Mailbox>(*util::RunLoop::Get());
+    auto request = std::make_unique<FileSourceRequest>(mailbox);
 
-        void runCallback(FileSource::Callback callback_, const Response& res) {
-            callback_(res);
-        }
+    request->onResponse(std::move(callback));
 
-    private:
-        std::shared_ptr<Mailbox> mailbox;
-        ActorRef<LocalFileSource::Impl> fs;
-    };
+    thread->invoke(&Impl::request, resource.url, [ref =
+            ActorRef<FileSourceRequest>(*request, mailbox)] (const Response& res) mutable {
+        ref.invoke(&FileSourceRequest::setResponse, res);
+    });
 
-    return std::make_unique<LocalFileRequest>(resource, callback, *thread);
+    return std::move(request);
 }
 
 bool LocalFileSource::acceptsURL(const std::string& url) {

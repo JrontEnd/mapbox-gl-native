@@ -1,5 +1,6 @@
 #include <mbgl/storage/default_file_source.hpp>
 #include <mbgl/storage/asset_file_source.hpp>
+#include <mbgl/storage/file_source_request.hpp>
 #include <mbgl/storage/local_file_source.hpp>
 #include <mbgl/storage/online_file_source.hpp>
 #include <mbgl/storage/offline_database.hpp>
@@ -237,30 +238,18 @@ void DefaultFileSource::setResourceTransform(std::function<std::string(Resource:
 }
 
 std::unique_ptr<AsyncRequest> DefaultFileSource::request(const Resource& resource, Callback callback) {
-    class DefaultFileRequest : public AsyncRequest {
-    public:
-        DefaultFileRequest(Resource resource_, FileSource::Callback callback_, ActorRef<DefaultFileSource::Impl> fs_)
-            : mailbox(std::make_shared<Mailbox>(*util::RunLoop::Get()))
-            , fs(fs_) {
-            fs.invoke(&DefaultFileSource::Impl::request, this, resource_, [callback_, ref = ActorRef<DefaultFileRequest>(*this, mailbox)](Response res) mutable {
-                ref.invoke(&DefaultFileRequest::runCallback, callback_, res);
-            });
-        }
+    auto mailbox = std::make_shared<Mailbox>(*util::RunLoop::Get());
+    auto request = std::make_unique<FileSourceRequest>(mailbox);
 
-        ~DefaultFileRequest() override {
-            fs.invoke(&DefaultFileSource::Impl::cancel, this);
-        }
+    request->onResponse(std::move(callback));
+    request->onCancel([fs = impl->actor(), req = request.get()] () mutable { fs.invoke(&Impl::cancel, req); });
 
-        void runCallback(FileSource::Callback callback_, const Response& res) {
-            callback_(res);
-        }
+    thread->invoke(&Impl::request, request.get(), resource, [ref =
+            ActorRef<FileSourceRequest>(*request, mailbox)] (const Response& res) mutable {
+        ref.invoke(&FileSourceRequest::setResponse, res);
+    });
 
-    private:
-        std::shared_ptr<Mailbox> mailbox;
-        ActorRef<DefaultFileSource::Impl> fs;
-    };
-
-    return std::make_unique<DefaultFileRequest>(resource, callback, *thread);
+    return std::move(request);
 }
 
 void DefaultFileSource::listOfflineRegions(std::function<void (std::exception_ptr, optional<std::vector<OfflineRegion>>)> callback) {
