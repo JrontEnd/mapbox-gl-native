@@ -45,7 +45,7 @@ void Renderer::Impl::update(const UpdateParameters& parameters) {
     renderStyle->update(parameters);
 }
 
-void Renderer::Impl::render(const RenderParameters& params) {
+void Renderer::Impl::render(const RenderParameters& params, RenderCallback callback) {
 
     // Initialize painter
     if (!painter) {
@@ -95,10 +95,7 @@ void Renderer::Impl::render(const RenderParameters& params) {
 
         // Schedule an update if we need to paint another frame due to transitions or
         // animations that are still in progress
-        if (renderStyle->hasTransitions() || painter->needsAnimation()) {
-            //|| transform.inTransition()) {
-            //TODO onUpdate(Update::Repaint);
-        }
+        callback(renderStyle->hasTransitions() || painter->needsAnimation());
     } else if (params.stillImageCallback && loaded) {
         FrameData frameData { timePoint,
                               pixelRatio,

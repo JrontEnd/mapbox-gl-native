@@ -48,7 +48,7 @@ public:
 
     void update(const UpdateParameters&);
 
-    void render(const RenderParameters&);
+    void render(const RenderParameters&, RenderCallback);
 
     std::vector<Feature> queryRenderedFeatures(const ScreenLineString&,
                                                const TransformState&,

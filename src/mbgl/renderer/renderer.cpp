@@ -27,9 +27,9 @@ void Renderer::update(std::unique_ptr<UpdateParameters> parameters, UpdateCallba
     callback();
 }
 
-void Renderer::render(std::unique_ptr<RenderParameters> parameters) {
+void Renderer::render(std::unique_ptr<RenderParameters> parameters, RenderCallback callback) {
     assert(BackendScope::exists());
-    impl->render(*parameters);
+    impl->render(*parameters, std::move(callback));
 }
 
 std::vector<Feature> Renderer::queryRenderedFeatures(const ScreenLineString& geometry,

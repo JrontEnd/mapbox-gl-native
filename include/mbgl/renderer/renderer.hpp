@@ -30,7 +30,9 @@ public:
 
     void update(std::unique_ptr<UpdateParameters>, UpdateCallback);
 
-    void render(std::unique_ptr<RenderParameters>);
+    using RenderCallback = std::function<void(bool)>;
+
+    void render(std::unique_ptr<RenderParameters>, RenderCallback);
 
     void setObserver(RendererObserver*);
 

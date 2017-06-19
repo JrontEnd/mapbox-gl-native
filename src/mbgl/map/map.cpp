@@ -294,7 +294,14 @@ void Map::Impl::render(View& view) {
             stillImageRequest ? stillImageRequest->callback : nullptr
     };
 
-    renderer->render(std::make_unique<RenderParameters>(std::move(params)));
+    renderer->render(
+            std::make_unique<RenderParameters>(std::move(params)),
+            [&](bool needsRepaint) {
+                if (needsRepaint || transform.inTransition()) {
+                    onUpdate(Update::Repaint);
+                }
+            }
+    );
 }
 
 #pragma mark - Style
