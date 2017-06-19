@@ -214,11 +214,14 @@ void Map::renderStill(View& view, StillImageCallback callback) {
         return;
     }
 
-    impl->stillImageRequest = std::make_unique<StillImageRequest>(view, [&](std::exception_ptr err) {
-        //TODO: package up in RenderParameters somehow
-        callback(err);
-        impl->stillImageRequest.reset();
-    });
+    impl->stillImageRequest = std::make_unique<StillImageRequest>(
+            view,
+            [&, callback_=std::move(callback)](std::exception_ptr err) {
+                //TODO: package up in RenderParameters somehow
+                callback_(err);
+                impl->stillImageRequest.reset();
+            });
+
     impl->onUpdate(Update::Repaint);
 }
 
