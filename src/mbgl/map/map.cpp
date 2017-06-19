@@ -120,7 +120,6 @@ public:
     bool loading = false;
 
     util::AsyncTask asyncUpdate;
-    util::AsyncTask asyncInvalidate;
     std::unique_ptr<StillImageRequest> stillImageRequest;
 };
 
@@ -170,10 +169,9 @@ Map::Impl::Impl(Map& map_,
       pixelRatio(pixelRatio_),
       programCacheDir(std::move(programCacheDir_)),
       asyncUpdate([this] {
-          update();
-      }),
-      asyncInvalidate([this] {
-          if (mode == MapMode::Continuous) {
+          if (updateFlags != Update::Nothing) {
+              update();
+          } else if (mode == MapMode::Continuous) {
               backend.invalidate();
           } else {
               renderStill();
@@ -284,11 +282,14 @@ void Map::Impl::update() {
 
     renderer->update(
             std::make_unique<UpdateParameters>(std::move(params)),
-            [this]() { asyncInvalidate.send(); }
+            [this]() {
+                asyncUpdate.send();
+            }
     );
 }
 
 void Map::Impl::render(View& view) {
+    // Nothing to render yet
     if (!renderer) {
         return;
     }
