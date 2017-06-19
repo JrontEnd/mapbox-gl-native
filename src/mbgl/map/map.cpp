@@ -289,7 +289,11 @@ void Map::Impl::update() {
 }
 
 void Map::Impl::render(View& view) {
-    RenderParameters params {
+    if (!renderer) {
+        return;
+    }
+
+    RenderParameters params{
             style->isLoaded(),
             transform.getState(),
             debugOptions,
